@@ -8,6 +8,7 @@
     import { goto }    from '$app/navigation';
 
     onMount(() => {
+      console.log($currentUser);
         if (!$currentUser) {
         goto('/users');
         }
@@ -20,13 +21,13 @@
       <a class="navbar-brand" href="/">Spelling App</a>
       <ul class="navbar-nav me-auto">
         <li class="nav-item">
-          <a class="nav-link" href="/users">
+          <!-- <a class="nav-link" href="/users">
             {#if $currentUser}
-              User: {$currentUser.name}
+              User: {$currentUser?.name}
             {:else}
               Select User
             {/if}
-          </a>
+          </a> -->
         </li>
         <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="/admin">Manage Lists</a></li>

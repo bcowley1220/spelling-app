@@ -32,7 +32,15 @@
       <li class="list-group-item d-flex justify-content-between align-items-center">
         {u.name}
         <div>
-          <button class="btn btn-sm btn-outline-primary me-2" on:click={() => currentUserId.set(u.id)}>
+          <!-- <button class="btn btn-sm btn-outline-primary me-2" on:click={() => currentUserId.set(u.id)}>
+            Use
+          </button> -->
+          <button
+            class="btn btn-sm me-2"
+            class:btn-primary={u.id === $currentUserId}
+            class:btn-outline-primary={u.id !== $currentUserId}
+            on:click={() => currentUserId.set(u.id)}
+          >
             Use
           </button>
           <button class="btn btn-sm btn-outline-danger" on:click={() => {
