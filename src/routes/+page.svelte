@@ -8,7 +8,7 @@
   // Redirect if no profile
   onMount(() => {
     if (!$currentUser) {
-      goto('/users');
+      goto('/settings');
     }
   });
 
