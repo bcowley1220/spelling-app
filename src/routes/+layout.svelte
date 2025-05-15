@@ -1,8 +1,17 @@
 <script>
     import 'bootstrap/dist/css/bootstrap.min.css';
-    import 'bootstrap/dist/css/bootstrap.min.css';import { currentUser } from '$lib/user';
+    import 'bootstrap/dist/css/bootstrap.min.css';
+    import { currentUser } from '$lib/user';
     import { theme } from '$lib/theme';
     import '../app.css';
+    import { onMount } from 'svelte';
+    import { goto }    from '$app/navigation';
+
+    onMount(() => {
+        if (!$currentUser) {
+        goto('/users');
+        }
+    });
 
   </script>
   
@@ -21,7 +30,7 @@
         </li>
         <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="/admin">Manage Lists</a></li>
-        <li class="nav-item"><a class="nav-link" href="/settings">Voice Settings</a></li>
+        <li class="nav-item"><a class="nav-link" href="/settings">Settings</a></li>
       </ul>
       <button
     class="btn btn-sm btn-outline-light ms-3"
