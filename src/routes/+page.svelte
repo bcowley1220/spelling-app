@@ -1,99 +1,101 @@
+<!-- src/routes/+page.svelte -->
 <script>
-    import { onMount } from 'svelte';
-    import { browser } from '$app/environment';
-    import Chart from 'chart.js/auto';
-    import { wordLists, attempts } from '$lib/stores';
-    import { gamify } from '$lib/gamification';
-  
-    let chart;
-    let chartCanvas;
-  
-    // Compute stats for each week
-    $: stats = Object.entries($wordLists).map(([id, words]) => {
-      const recs    = $attempts[id]  || [];
-      const total   = recs.length;
-      const correct = recs.filter(r => r.correct).length;
-      const accuracy = total ? Math.round(100 * correct / total) : 0;
-  
-      return { id, total, correct, accuracy };
-    });
-  
-    // Labels and data arrays for Chart.js
-    $: labels      = stats.map(s => new Date(+s.id).toLocaleDateString());
-    $: accuracies  = stats.map(s => s.accuracy);
-  
-    onMount(() => {
-      if (browser && stats.length) {
-        chart = new Chart(chartCanvas, {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [{
-              label: 'Accuracy (%)',
-              data: accuracies,
-              fill: false,
-              tension: 0.3
-            }]
-          },
-          options: {
-            scales: {
-              y: {
-                min: 0,
-                max: 100,
-                title: { display: true, text: 'Accuracy (%)' }
-              },
-              x: {
-                title: { display: true, text: 'Week' }
-              }
-            },
-            plugins: {
-              legend: { display: false },
-              tooltip: { callbacks: { label: ctx => `${ctx.parsed.y}%` } }
-            }
-          }
-        });
-      }
-  
-      return () => {
-        if (chart) chart.destroy();
-      };
-    });
-  </script>
-  
-  <h1 class="mb-4">Weekly Progress</h1>
-  <div class="mb-4 p-3 rounded">
-    <h2>🏆 Your Progress</h2>
-    <p>XP: <strong>{$gamify.xp}</strong></p>
-    <p>Streak: <strong>{$gamify.streak}</strong> days</p>
-    {#if $gamify.badges.length}
-      <p>Badges:</p>
-      <ul>
-        {#each $gamify.badges as badge}
-          <li>🎖️ {badge}</li>
-        {/each}
-      </ul>
-    {/if}
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { wordLists, attempts, troubleWords } from '$lib/stores';
+  import { currentUser } from '$lib/user';
+
+  // Redirect if no profile
+  onMount(() => {
+    if (!$currentUser) {
+      goto('/users');
+    }
+  });
+
+  // Compute stats for each week
+  $: stats = Object.entries($wordLists).map(([id, words]) => {
+    const recs          = $attempts[id]    || [];
+    const totalAttempts = recs.length;
+    const correctCount  = recs.filter(r => r.correct).length;
+    const accuracy      = totalAttempts
+      ? Math.round((100 * correctCount) / totalAttempts)
+      : 0;
+
+    const passed        = new Set(recs.filter(r => r.correct).map(r => r.word));
+    const complete      = passed.size === words.length;
+    const issues        = $troubleWords[id] || [];
+
+    return { id, words, totalAttempts, correctCount, accuracy, complete, issues };
+  });
+
+  // Repeat a week by clearing attempts & issues
+  function repeatWeek(id) {
+    if (!confirm('This will reset your progress for this week. Continue?')) return;
+    attempts.update(a => { delete a[id]; return a; });
+    troubleWords.update(t => { delete t[id]; return t; });
+    goto(`/practice/${id}`);
+  }
+</script>
+
+{#if Object.keys($wordLists).length === 0}
+  <div class="alert alert-info">
+    <h4>Welcome{#if $currentUser}, {$currentUser.name}{/if}!</h4>
+    <p>Let's set up your first spelling list:</p>
+    <ol>
+      <li>Go to <a href="/admin">Spelling Lists</a> and add a new list.</li>
+      <li>Return here and click Practice to start.</li>
+    </ol>
+    <a href="/admin" class="btn btn-primary">Create Spelling List</a>
   </div>
-  
-  <!-- Chart Card -->
-  <div class="card mb-4">
-    <div class="card-body">
-      <canvas bind:this={chartCanvas}></canvas>
-    </div>
-  </div>
-  
-  <!-- Stats List -->
+{:else}
+  <h1 class="mb-4">Hello, {$currentUser.name}!</h1>
+
+  <!-- Week List with Completion, Issues, Words & Actions -->
   <ul class="list-group">
-    {#each stats as s}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        <div>
-          <strong>{new Date(+s.id).toLocaleDateString()}</strong>
-          — {s.correct}/{s.total} correct ({s.accuracy}%)
+    {#each stats as stat}
+      <li class="list-group-item">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{new Date(+stat.id).toLocaleDateString()}</strong>
+            — {stat.correctCount}/{stat.totalAttempts} correct ({stat.accuracy}%)
+          </div>
+          <div class="text-end">
+            {#if stat.complete}
+              <span class="badge bg-success me-2">Complete</span>
+            {:else}
+              <span class="badge bg-warning text-dark me-2">In Progress</span>
+            {/if}
+            {#if stat.complete}
+            <!-- no practice button at all -->
+            {:else}
+              <a href={`/practice/${stat.id}`} class="btn btn-sm btn-primary">
+                Practice
+              </a>
+            {/if}
+            <button
+              class="btn btn-sm btn-warning me-2"
+              on:click={() => repeatWeek(stat.id)}
+            >
+              Repeat
+            </button>
+          </div>
         </div>
-        <a href={`/practice/${s.id}`} class="btn btn-sm btn-primary">
-          Practice
-        </a>
+
+        {#if stat.issues.length}
+          <div class="mt-2 text-danger small">
+            ⚠️ Trouble words: {stat.issues.join(', ')}
+          </div>
+        {/if}
+
+        {#if stat.words.length}
+          <div class="mt-2 small">
+            <span class="fw-bold">Words:</span>
+            {#each stat.words as w}
+              <span class="badge bg-secondary me-1">{w}</span>
+            {/each}
+          </div>
+        {/if}
       </li>
     {/each}
   </ul>
-  
+{/if}
