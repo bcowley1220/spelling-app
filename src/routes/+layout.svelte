@@ -31,7 +31,7 @@
         </li>
         <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="/admin">Manage Lists</a></li>
-        <li class="nav-item"><a class="nav-link" href="/settings">Settings</a></li>
+        <!-- <li class="nav-item"><a class="nav-link" href="/settings">Settings</a></li> -->
       </ul>
       <button
     class="btn btn-sm btn-outline-light ms-3"
