@@ -12,9 +12,21 @@
         if (!$currentUser) {
         goto('/users');
         }
+        if (
+          typeof navigator !== 'undefined' &&
+          'serviceWorker' in navigator &&
+          import.meta.env.PROD
+        ) {
+          navigator.serviceWorker
+            .register('/sw.js')
+            .then(() => console.log('SW registered'))
+            .catch((e) => console.warn('SW registration failed:', e));
+        }
     });
 
   </script>
+  <link rel="manifest" href="/manifest.webmanifest" />
+
   
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
