@@ -8,7 +8,7 @@
   // Redirect if no profile
   onMount(() => {
     if (!$currentUser) {
-      goto('/settings');
+      goto('/users');
     }
   });
 
@@ -48,7 +48,9 @@
     <a href="/admin" class="btn btn-primary">Create Spelling List</a>
   </div>
 {:else}
-  <h1 class="mb-4">Hello, {$currentUser.name}!</h1>
+  {#if $currentUser}
+    <h1 class="mb-4">Hello, {$currentUser.name}!</h1>
+  {/if}
 
   <!-- Week List with Completion, Issues, Words & Actions -->
   <ul class="list-group">
@@ -65,19 +67,21 @@
             {:else}
               <span class="badge bg-warning text-dark me-2">In Progress</span>
             {/if}
-            {#if stat.complete}
-            <!-- no practice button at all -->
-            {:else}
-              <a href={`/practice/${stat.id}`} class="btn btn-sm btn-primary">
+
+            {#if !stat.complete}
+              <a href={`/practice/${stat.id}`} class="btn btn-sm btn-primary me-2">
                 Practice
               </a>
             {/if}
-            <button
-              class="btn btn-sm btn-warning me-2"
-              on:click={() => repeatWeek(stat.id)}
-            >
-              Repeat
-            </button>
+
+            {#if stat.complete}
+              <button
+                class="btn btn-sm btn-warning"
+                on:click={() => repeatWeek(stat.id)}
+              >
+                Repeat
+              </button>
+            {/if}
           </div>
         </div>
 
